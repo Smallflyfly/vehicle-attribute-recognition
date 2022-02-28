@@ -3,3 +3,4 @@ weights/
 *.jpg
 *.png
 *.pth
+logs/

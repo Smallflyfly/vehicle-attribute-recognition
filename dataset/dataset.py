@@ -16,6 +16,7 @@ TYPES = ['car', 'suv', 'van', 'truck']
 
 
 def _resize_image(im, width, height):
+    im = cv2.imread(im)
     w, h = im.shape[1], im.shape[0]
     r = min(width / w, height / h)
     new_w, new_h = int(w * r), int(h * r)
@@ -55,14 +56,20 @@ class VehicleDataset(Dataset):
 
     def _read_csv(self):
         dataframe = pandas.read_csv(self.label_path, 'rb', engine='python')
-        ids, types = dataframe['id'], dataframe['type']
-        for id, type in zip(ids, types):
-            self.train_images.append(os.path.join(self.image_path, id))
-            index = TYPES.index(type)
+        # print(dataframe)
+        all_labels = dataframe['id,type']
+        for line in all_labels:
+            image, label = line.strip().split(',')
+            self.train_images.append(os.path.join(self.image_path, image))
+            index = TYPES.index(label)
             self.train_labels.append(index)
 
     def __getitem__(self, index):
         image = self.train_images[index]
         label = self.train_labels[index]
         im = _resize_image(image, self.width, self.height)
+        im = self.transforms(im)
         return im, label
+
+    def __len__(self):
+        return len(self.train_images)

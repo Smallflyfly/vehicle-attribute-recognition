@@ -49,6 +49,21 @@ class SpatialTransformBlock(nn.Module):
         self.num_classes = num_classes
         self.spatial = pooling_size
 
+        self.conv_bn = nn.Sequential(*[
+            nn.Conv2d(channels, channels, kernel_size=(5, 5), stride=(2, 2), bias=False),
+            nn.BatchNorm2d(channels),
+            nn.ReLU(),
+
+            nn.Conv2d(channels, channels, kernel_size=(3, 3), stride=(2, 2), bias=False),
+            nn.BatchNorm2d(channels),
+            nn.ReLU(),
+
+            nn.Conv2d(channels, channels, kernel_size=(3, 3), stride=(2, 2), bias=False),
+            nn.BatchNorm2d(channels),
+            nn.ReLU(),
+            nn.AvgPool2d((5, 5), stride=1, padding=0, ceil_mode=True, count_include_pad=True)
+        ])
+
         self.global_pool = nn.AvgPool2d((pooling_size, pooling_size // 2), stride=1, padding=0, ceil_mode=True,
                                         count_include_pad=True)
 
@@ -87,7 +102,11 @@ class SpatialTransformBlock(nn.Module):
             theta_i = self.transform_theta(theta_i, i)
 
             sub_feature = self.stn(stn_feature, theta_i)
-            pred = self.gap_list[i](sub_feature).view(bs, -1)
+            sub_feature = self.conv_bn(sub_feature)
+            print(sub_feature.shape)
+            sub_feature = self.gap_list[i](sub_feature)
+            pred = sub_feature.view(bs, -1)
+            print(pred.shape)
             pred = self.fc_list[i](pred)
             pred_list.append(pred)
         pred = torch.cat(pred_list, 1)
@@ -99,9 +118,15 @@ class InceptionNet(nn.Module):
         super(InceptionNet, self).__init__()
         self.num_classes = num_classes
         self.main_branch = BNInception()
-        self.global_pool = nn.AvgPool2d((8, 4), stride=1, padding=0, ceil_mode=True, count_include_pad=True)
+        self.global_pool = nn.AvgPool2d((6, 6), stride=1, padding=0, ceil_mode=True, count_include_pad=True)
         self.finalfc = nn.Linear(1024, num_classes)
         self.softmax = nn.Softmax()
+        self.conv = nn.Conv2d(1024, 1024, kernel_size=(3, 3), stride=2, bias=False)
+        self.bn = nn.BatchNorm2d(1024)
+        self.relu = nn.ReLU()
+        self.conv_bn = nn.Sequential(*[
+            self.conv, self.bn, self.relu
+        ])
 
         self.st_3b = SpatialTransformBlock(num_classes, 32, 256 * 3)
         self.st_4d = SpatialTransformBlock(num_classes, 16, 256 * 2)
@@ -120,8 +145,12 @@ class InceptionNet(nn.Module):
     def forward(self, input):
         bs = input.size(0)
         feat_3b, feat_4d, feat_5b = self.main_branch(input)
-        main_feat = self.global_pool(feat_5b).view(bs, -1)
-        main_pred = self.finalfc(main_feat)
+        # main branch
+        # main_feat = self.conv_bn(feat_5b)
+        # main_feat = self.global_pool(main_feat)
+        # # 1*1024
+        # main_feat = main_feat.view(bs, -1)
+        # main_pred = self.finalfc(main_feat)
 
         fusion_5b = self.latlayer_5b(feat_5b)
         fusion_4d = self._upsample_add(fusion_5b, self.latlayer_4d(feat_4d))

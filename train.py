@@ -17,7 +17,7 @@ from model.inception_iccv import inception
 from utils.utils import build_optimizer, build_scheduler
 
 EPOCH = 200
-BATCH_SIZE = 8
+BATCH_SIZE = 1
 
 t = time.strftime("%Y%m%d%H%M%S", time.localtime())
 train_log = 'logs/' + t + '.log'
@@ -27,7 +27,7 @@ logging.basicConfig(filename=train_log, format='%(asctime)s - %(name)s - %(level
 
 
 def train():
-    dataset = VehicleDataset('data/train', 'data/train_sorted.csv', 480, 480)
+    dataset = VehicleDataset('data/train', 'data/train_sorted.csv', 448, 448)
     train_dataloader = DataLoader(dataset=dataset, batch_size=BATCH_SIZE, num_workers=0, shuffle=True)
     model = inception(num_classes=4)
     model = model.cuda()

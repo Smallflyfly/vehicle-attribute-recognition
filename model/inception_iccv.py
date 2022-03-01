@@ -64,6 +64,9 @@ class SpatialTransformBlock(nn.Module):
             nn.AvgPool2d((5, 5), stride=1, padding=0, ceil_mode=True, count_include_pad=True)
         ])
 
+        self.att = ChannelAttn(channels)
+
+
         self.global_pool = nn.AvgPool2d((pooling_size, pooling_size // 2), stride=1, padding=0, ceil_mode=True,
                                         count_include_pad=True)
 
@@ -95,20 +98,24 @@ class SpatialTransformBlock(nn.Module):
     def forward(self, features):
         pred_list = []
         bs = features.size(0)
-        for i in range(self.num_classes):
-            stn_feature = features * self.att_list[i](features) + features
+        # for i in range(self.num_classes):
+        #     stn_feature = features * self.att_list[i](features) + features
+        #
+        #     theta_i = self.stn_list[i](F.avg_pool2d(stn_feature, stn_feature.size()[2:]).view(bs, -1)).view(-1, 4)
+        #     theta_i = self.transform_theta(theta_i, i)
+        #
+        #     sub_feature = self.stn(stn_feature, theta_i)
+        #     print(sub_feature.shape)
+        #     sub_feature = self.conv_bn(sub_feature)
+        #     print(sub_feature.shape)
+        #     # sub_feature = self.gap_list[i](sub_feature)
+        #     pred = sub_feature.view(bs, -1)
+        #     print(pred.shape)
+        #     pred = self.fc_list[i](pred)
+        #     pred_list.append(pred)
 
-            theta_i = self.stn_list[i](F.avg_pool2d(stn_feature, stn_feature.size()[2:]).view(bs, -1)).view(-1, 4)
-            theta_i = self.transform_theta(theta_i, i)
+        stn_feature = features * self.att_list[i](features) + features
 
-            sub_feature = self.stn(stn_feature, theta_i)
-            sub_feature = self.conv_bn(sub_feature)
-            print(sub_feature.shape)
-            sub_feature = self.gap_list[i](sub_feature)
-            pred = sub_feature.view(bs, -1)
-            print(pred.shape)
-            pred = self.fc_list[i](pred)
-            pred_list.append(pred)
         pred = torch.cat(pred_list, 1)
         return pred
 

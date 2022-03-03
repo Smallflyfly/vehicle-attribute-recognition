@@ -5,11 +5,15 @@
 @time: 2021/05/06
 """
 import pickle
+import random
 from collections import OrderedDict
 from functools import partial
 
 import torch
 import os.path as osp
+import numpy as np
+
+from gevent import os
 
 
 def load_checkpoint(fpath):
@@ -61,7 +65,7 @@ def load_pretrained_weight(model, weight_path):
         )
 
 
-def build_optimizer(model, optim='adam', lr=0.005, weight_decay=5e-04, momentum=0.9, sgd_dampening=0,
+def build_optimizer(model, optim='adam', lr=0.0005, weight_decay=5e-04, momentum=0.9, sgd_dampening=0,
                     sgd_nesterov=False, rmsprop_alpha=0.99, adam_beta1=0.9, adam_beta2=0.99, staged_lr=False,
                     new_layers='', base_lr_mult=0.1):
     param_groups = model.parameters()
@@ -137,3 +141,15 @@ def build_scheduler(optimizer, lr_scheduler='single_step', stepsize=1, gamma=0.1
             optimizer, float(max_epoch))
 
     return scheduler
+
+
+def seed_it(seed):
+    random.seed(seed)
+    os.environ["PYTHONSEED"] = str(seed)
+    np.random.seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = True
+    torch.backends.cudnn.enabled = True
+    torch.manual_seed(seed)

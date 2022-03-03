@@ -4,3 +4,4 @@ weights/
 *.png
 *.pth
 logs/
+runs/

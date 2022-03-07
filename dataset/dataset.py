@@ -6,35 +6,13 @@
 """
 import os
 
-import cv2
 import pandas
-from PIL import Image
 from torch.utils.data import Dataset
 from torchvision.transforms import transforms
 
+from utils.utils import resize_image
+
 TYPES = ['car', 'suv', 'van', 'truck']
-
-
-def _resize_image(im, width, height):
-    im = cv2.imread(im)
-    w, h = im.shape[1], im.shape[0]
-    r = min(width / w, height / h)
-    new_w, new_h = int(w * r), int(h * r)
-    im = cv2.resize(im, (new_w, new_h))
-    pw = (width - new_w) // 2
-    ph = (height - new_h) // 2
-    top, bottom = ph, ph
-    left, right = pw, pw
-
-    if top + bottom + new_h < height:
-        bottom += 1
-
-    if left + right + new_w < width:
-        right += 1
-
-    im = cv2.copyMakeBorder(im, top, bottom, left, right, borderType=cv2.BORDER_CONSTANT, value=114)
-    im = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
-    return im
 
 
 class VehicleDataset(Dataset):
@@ -67,7 +45,7 @@ class VehicleDataset(Dataset):
     def __getitem__(self, index):
         image = self.train_images[index]
         label = self.train_labels[index]
-        im = _resize_image(image, self.width, self.height)
+        im = resize_image(image, self.width, self.height)
         im = self.transforms(im)
         return im, label
 

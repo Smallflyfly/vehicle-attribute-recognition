@@ -9,8 +9,9 @@ import os
 import pandas
 from torch.utils.data import Dataset
 
-from dataset.dataset import _resize_image
 from torchvision.transforms import transforms
+
+from utils.utils import resize_image
 
 TYPES = ['car', 'suv', 'van', 'truck']
 
@@ -66,7 +67,7 @@ class KTrainDataset(Dataset):
 
     def __getitem__(self, index):
         image = self.images[index]
-        im = _resize_image(image, self.width, self.height)
+        im = resize_image(image, self.width, self.height)
         im = self.transform(im)
         label = self.labels[index]
         return im, label

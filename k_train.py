@@ -62,7 +62,7 @@ def run_train(model, train_dataloader, val_dataloader, loss_func, optimizer, sch
             optimizer.step()
 
             if i % 50 == 0:
-                logging.info(' Fold:{} Epoch:{}({}/{}) lr:{:6f} loss:{:6f}:'.format(
+                logging.info('Fold:{} Epoch:{}({}/{}) lr:{:6f} loss:{:6f}:'.format(
                     fold + 1, epoch, i, EPOCH, optimizer.param_groups[-1]['lr'], loss.item()))
 
             index = fold * EPOCH * len(train_dataloader) + epoch * len(train_dataloader) + i + 1
@@ -72,6 +72,7 @@ def run_train(model, train_dataloader, val_dataloader, loss_func, optimizer, sch
 
         scheduler.step()
         val_acc = val_model(model, val_dataloader)
+        logging.info('Fold:{} / Epoch:{} val acc: {:6f}'.format(fold+1, epoch, val_acc))
         writer.add_scalar('val_acc', val_acc, fold * EPOCH + epoch)
         if val_acc > best_acc:
             best_acc = val_acc

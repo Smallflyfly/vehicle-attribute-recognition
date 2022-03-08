@@ -35,12 +35,15 @@ def create_csv(all_results):
 
 def test():
     images = os.listdir(TEST_PATH)
+    ids = [int(image.replace('img_', '').replace('.jpg', '')) for image in images]
+    ids.sort()
     model = resnet101(num_classes=4)
     model = model.cuda()
     softmax = nn.Softmax()
     all_results = []
     model.eval()
-    for idx, image in enumerate(images):
+    for idx, id in enumerate(ids):
+        image = 'img_' + str(id) + '.jpg'
         im = resize_image(os.path.join(TEST_PATH, image), 256, 256)
         im = transform(im)
         im = im.cuda().unsqueeze(0)
